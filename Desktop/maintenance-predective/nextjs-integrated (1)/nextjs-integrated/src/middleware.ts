@@ -16,14 +16,17 @@ export async function middleware(request: NextRequest) {
 
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
-  // ── /login: redirect to dashboard if user already has a valid session ──
-  if (pathname === '/login') {
+  // ── Auth pages: accessible without a session ─────────────────────────
+  // If the user already has a valid session, bounce them to the dashboard
+  // so they don't land on /login or /register while already logged in.
+  const AUTH_PAGES = new Set(['/login', '/register', '/forgot-password', '/reset-password']);
+  if (AUTH_PAGES.has(pathname)) {
     if (token) {
       try {
         await verifyToken(token);
         return NextResponse.redirect(new URL('/', request.url));
       } catch {
-        // Token is invalid or expired — show the login page as normal.
+        // Token invalid/expired — show the auth page normally.
       }
     }
     return NextResponse.next();

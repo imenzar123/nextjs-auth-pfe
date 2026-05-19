@@ -31,4 +31,19 @@ class AuthService
     {
         $user->currentAccessToken()->delete();
     }
+
+    public function revokeAllTokens(User $user): void
+    {
+        $user->tokens()->delete();
+    }
+
+    public function createUser(string $name, string $email, string $password): User
+    {
+        return User::create([
+            'name'     => $name,
+            'email'    => $email,
+            'password' => $password, // hashed automatically by the model cast
+            'role'     => 'user',    // never trust the request — always default to user
+        ]);
+    }
 }

@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import type { LoginCredentials } from '@/types/auth';
 
 export default function LoginPage() {
@@ -192,6 +193,13 @@ export default function LoginPage() {
                   <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
                 </button>
               </div>
+            </div>
+
+            {/* Forgot password */}
+            <div style={{ textAlign: 'right', marginTop: '-0.4rem' }}>
+              <Link href="/forgot-password" className="login-link" style={{ fontSize: '0.82rem' }}>
+                Mot de passe oublié ?
+              </Link>
             </div>
 
             {/* Submit */}

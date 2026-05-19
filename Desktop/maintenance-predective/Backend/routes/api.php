@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,10 +38,11 @@ Route::middleware('auth:sanctum')->group(function () {
     */
     Route::middleware('role.admin')->group(function () {
 
-        // Future: user management, module management, connection logs
-        // Route::apiResource('users',   UserController::class);
-        // Route::apiResource('modules', ModuleController::class);
-        // Route::get('logs',            [LogController::class, 'index']);
+        // User CRUD — admin only
+        Route::get('/users',          [UserController::class, 'index']);
+        Route::post('/users',         [UserController::class, 'store']);
+        Route::put('/users/{user}',   [UserController::class, 'update']);
+        Route::delete('/users/{user}',[UserController::class, 'destroy']);
 
     });
 });

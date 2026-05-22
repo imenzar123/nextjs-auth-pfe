@@ -1,0 +1,48 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { LARAVEL_TOKEN_COOKIE } from '@/backend/lib/constants';
+
+function laravelHeaders(token: string) {
+  return {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get(LARAVEL_TOKEN_COOKIE)?.value;
+  if (!token) return NextResponse.json({ message: 'Unauthenticated.' }, { status: 401 });
+
+  const motorId = request.nextUrl.searchParams.get('motor_id');
+  const url = motorId
+    ? `${process.env.LARAVEL_API_URL}/api/sensors?motor_id=${motorId}`
+    : `${process.env.LARAVEL_API_URL}/api/sensors`;
+
+  try {
+    const res = await fetch(url, { headers: laravelHeaders(token) });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch (err) {
+    console.error('[GET /api/sensors]', err);
+    return NextResponse.json({ message: 'Server error.' }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const token = request.cookies.get(LARAVEL_TOKEN_COOKIE)?.value;
+  if (!token) return NextResponse.json({ message: 'Unauthenticated.' }, { status: 401 });
+
+  try {
+    const body = await request.json();
+    const res = await fetch(`${process.env.LARAVEL_API_URL}/api/sensors`, {
+      method: 'POST',
+      headers: laravelHeaders(token),
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    return NextResponse.json(data, { status: res.status });
+  } catch (err) {
+    console.error('[POST /api/sensors]', err);
+    return NextResponse.json({ message: 'Server error.' }, { status: 500 });
+  }
+}

@@ -8,12 +8,19 @@ export const LARAVEL_TOKEN_COOKIE = 'laravel-token';
 export const AUTH_COOKIE_MAX_AGE = 8 * 60 * 60;
 
 /**
- * Routes accessible only to users with the 'admin' role.
- * Used by both middleware.ts (server) and Sidebar (client) so it lives
- * here in constants — no Node.js or server-only APIs, safe anywhere.
+ * Routes accessible only to the 'admin' role.
+ * Used by middleware.ts and Sidebar.
  */
 export const ADMIN_ONLY_PATHS = [
   '/gestion-utilisateurs',
+] as const;
+
+/**
+ * Routes accessible to 'admin' and 'operator' roles (not plain 'user').
+ * Used by middleware.ts and Sidebar.
+ */
+export const ELEVATED_PATHS = [
   '/gestion-modules',
   '/journal-connexions',
+  '/configurer-capteurs',
 ] as const;

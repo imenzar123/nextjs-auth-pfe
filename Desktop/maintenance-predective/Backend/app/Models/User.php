@@ -29,4 +29,14 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
+
+    public function isOperator(): bool
+    {
+        return $this->role === 'operator';
+    }
+
+    public function isElevated(): bool
+    {
+        return $this->role === 'admin' || $this->role === 'operator';
+    }
 }

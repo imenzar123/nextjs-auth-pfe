@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\MotorController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\SensorController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,24 +28,43 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me',      [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-    // Future: motors, alerts, monitoring, prediction
-    // Route::apiResource('motors',  MotorController::class);
-    // Route::apiResource('alerts',  AlertController::class);
-    // Route::get('temps-reel',      [MonitoringController::class, 'live']);
-    // Route::get('prediction',      [PredictionController::class, 'index']);
+    // Profile — authenticated user manages their own account
+    Route::put('/profile',          [ProfileController::class, 'update']);
+    Route::put('/profile/password', [ProfileController::class, 'changePassword']);
+
+    // Motors — read access for all authenticated users
+    Route::get('/motors',          [MotorController::class, 'index']);
+    Route::get('/motors/{motor}',  [MotorController::class, 'show']);
+
+    // Sensors — read access for all authenticated users
+    Route::get('/sensors',                      [SensorController::class, 'index']);
+    Route::get('/sensors/{sensor}',             [SensorController::class, 'show']);
+    Route::get('/motors/{motor}/sensors',       [SensorController::class, 'indexByMotor']);
 
     /*
     |----------------------------------------------------------------------
-    | Admin-only — token required + role must be admin
+    | Elevated — admin or operator (motors + sensors write access)
+    |----------------------------------------------------------------------
+    */
+    Route::middleware('role.elevated')->group(function () {
+        Route::post('/motors',           [MotorController::class, 'store']);
+        Route::put('/motors/{motor}',    [MotorController::class, 'update']);
+        Route::delete('/motors/{motor}', [MotorController::class, 'destroy']);
+
+        Route::post('/sensors',           [SensorController::class, 'store']);
+        Route::put('/sensors/{sensor}',   [SensorController::class, 'update']);
+        Route::delete('/sensors/{sensor}',[SensorController::class, 'destroy']);
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Admin-only — user management
     |----------------------------------------------------------------------
     */
     Route::middleware('role.admin')->group(function () {
-
-        // User CRUD — admin only
-        Route::get('/users',          [UserController::class, 'index']);
-        Route::post('/users',         [UserController::class, 'store']);
-        Route::put('/users/{user}',   [UserController::class, 'update']);
-        Route::delete('/users/{user}',[UserController::class, 'destroy']);
-
+        Route::get('/users',           [UserController::class, 'index']);
+        Route::post('/users',          [UserController::class, 'store']);
+        Route::put('/users/{user}',    [UserController::class, 'update']);
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
     });
 });

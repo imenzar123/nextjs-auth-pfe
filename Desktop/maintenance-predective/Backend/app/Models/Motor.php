@@ -25,4 +25,9 @@ class Motor extends Model
     {
         return $this->hasMany(Sensor::class);
     }
+
+    public function sensorHistories(): HasMany
+    {
+        return $this->hasMany(SensorHistory::class);
+    }
 }

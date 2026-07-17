@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\MotorController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\SensorController;
+use App\Http\Controllers\Api\SensorHistoryController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +42,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sensors/{sensor}',             [SensorController::class, 'show']);
     Route::get('/motors/{motor}/sensors',       [SensorController::class, 'indexByMotor']);
 
+    // Sensor histories — read access for all authenticated users
+    Route::get('/sensor-histories',                    [SensorHistoryController::class, 'index']);
+    Route::get('/sensor-histories/{sensorHistory}',    [SensorHistoryController::class, 'show']);
+    Route::get('/sensors/{sensor}/histories',          [SensorHistoryController::class, 'indexBySensor']);
+
     /*
     |----------------------------------------------------------------------
     | Elevated — admin or operator (motors + sensors write access)
@@ -54,6 +60,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/sensors',           [SensorController::class, 'store']);
         Route::put('/sensors/{sensor}',   [SensorController::class, 'update']);
         Route::delete('/sensors/{sensor}',[SensorController::class, 'destroy']);
+
+        Route::post('/sensor-histories',                   [SensorHistoryController::class, 'store']);
+        Route::delete('/sensor-histories/{sensorHistory}', [SensorHistoryController::class, 'destroy']);
     });
 
     /*

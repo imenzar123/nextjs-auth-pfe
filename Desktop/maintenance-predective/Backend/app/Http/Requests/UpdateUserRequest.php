@@ -19,7 +19,7 @@ class UpdateUserRequest extends FormRequest
         return [
             'name'  => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'string', 'email', 'max:255', "unique:users,email,{$userId}"],
-            'role'  => ['sometimes', 'string', 'in:admin,user'],
+            'role'  => ['sometimes', 'string', 'in:admin,user,operator'],
         ];
     }
 
@@ -28,7 +28,7 @@ class UpdateUserRequest extends FormRequest
         return [
             'email.email'   => 'Email must be a valid email address.',
             'email.unique'  => 'An account with this email already exists.',
-            'role.in'       => 'Role must be admin or user.',
+            'role.in'       => 'Role must be admin, user, or operator.',
         ];
     }
 }

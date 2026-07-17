@@ -4,6 +4,7 @@ import {
   AUTH_COOKIE_NAME,
   LARAVEL_TOKEN_COOKIE,
   ADMIN_ONLY_PATHS,
+  ELEVATED_PATHS,
 } from '@/backend/lib/constants';
 
 export async function middleware(request: NextRequest) {
@@ -51,13 +52,18 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // ── RBAC: admin-only pages ────────────────────────────────────────────
+  // ── RBAC ─────────────────────────────────────────────────────────────
   const isAdminOnly = (ADMIN_ONLY_PATHS as readonly string[]).some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+  const isElevated = (ELEVATED_PATHS as readonly string[]).some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
 
   if (isAdminOnly && payload.role !== 'admin') {
-    // Non-admin tried to access an admin page → back to dashboard.
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+  if (isElevated && payload.role !== 'admin' && payload.role !== 'operator') {
     return NextResponse.redirect(new URL('/', request.url));
   }
 

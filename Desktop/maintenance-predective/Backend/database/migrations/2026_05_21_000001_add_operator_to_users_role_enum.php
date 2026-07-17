@@ -7,9 +7,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (DB::getDriverName() === 'mysql') {
+        $driver = DB::getDriverName();
+
+        if ($driver === 'mysql') {
             DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'user', 'operator') NOT NULL DEFAULT 'user'");
-        } elseif (DB::getDriverName() === 'sqlite') {
+        } elseif ($driver === 'pgsql') {
+            // PostgreSQL uses a CHECK constraint for enum-like columns.
+            // Drop the old check and add an expanded one that includes 'operator'.
+            DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+            DB::statement("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'user', 'operator'))");
+        } elseif ($driver === 'sqlite') {
             // SQLite cannot ALTER a CHECK constraint — recreate table with expanded allowed values.
             DB::statement("CREATE TABLE users_new (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -31,10 +38,16 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'mysql') {
+        $driver = DB::getDriverName();
+
+        if ($driver === 'mysql') {
             DB::statement("UPDATE users SET role = 'user' WHERE role = 'operator'");
             DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('admin', 'user') NOT NULL DEFAULT 'user'");
-        } elseif (DB::getDriverName() === 'sqlite') {
+        } elseif ($driver === 'pgsql') {
+            DB::statement("UPDATE users SET role = 'user' WHERE role = 'operator'");
+            DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+            DB::statement("ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'user'))");
+        } elseif ($driver === 'sqlite') {
             DB::statement("UPDATE users SET role = 'user' WHERE role = 'operator'");
             DB::statement("CREATE TABLE users_new (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,

@@ -16,7 +16,7 @@ class StoreUserRequest extends FormRequest
         return [
             'name'  => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'role'  => ['required', 'string', 'in:admin,user'],
+            'role'  => ['required', 'string', 'in:admin,user,operator'],
         ];
     }
 
@@ -28,7 +28,7 @@ class StoreUserRequest extends FormRequest
             'email.email'    => 'Email must be a valid email address.',
             'email.unique'   => 'An account with this email already exists.',
             'role.required'  => 'Role is required.',
-            'role.in'        => 'Role must be admin or user.',
+            'role.in'        => 'Role must be admin, user, or operator.',
         ];
     }
 }

@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Motor;
+use App\Models\Sensor;
+use App\Observers\MotorObserver;
+use App\Observers\SensorObserver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,5 +22,8 @@ class AppServiceProvider extends ServiceProvider
                 . '?token=' . $token
                 . '&email=' . urlencode($user->email);
         });
+
+        Motor::observe(MotorObserver::class);
+        Sensor::observe(SensorObserver::class);
     }
 }

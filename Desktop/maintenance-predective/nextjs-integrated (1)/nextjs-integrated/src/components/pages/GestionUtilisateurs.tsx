@@ -5,7 +5,7 @@ import Pagination from '@/components/ui/Pagination';
 import Modal from '@/components/ui/Modal';
 
 // ── Types ──────────────────────────────────────────────────────
-type Role = 'admin' | 'user';
+type Role = 'admin' | 'user' | 'operator';
 
 interface User {
   id: number;
@@ -24,13 +24,15 @@ interface FormState {
 
 // ── Helpers ────────────────────────────────────────────────────
 const ROLE_LABEL: Record<Role, string> = {
-  admin: 'Administrateur',
-  user:  'Utilisateur',
+  admin:    'Administrateur',
+  user:     'Utilisateur',
+  operator: 'Opérateur',
 };
 
 const ROLE_BADGE: Record<Role, string> = {
-  admin: 'badge-admin',
-  user:  'badge-user',
+  admin:    'badge-admin',
+  user:     'badge-user',
+  operator: 'badge-operator',
 };
 
 const BLANK_FORM: FormState = { name: '', email: '', role: 'user', statut: 'actif' };
@@ -254,9 +256,10 @@ export default function GestionUtilisateursPage() {
             {/* Role filter */}
             <div className="filter-pills">
               {([
-                { k: 'all',   l: 'Tous' },
-                { k: 'admin', l: 'Administrateur' },
-                { k: 'user',  l: 'Utilisateur' },
+                { k: 'all',      l: 'Tous' },
+                { k: 'admin',    l: 'Administrateur' },
+                { k: 'operator', l: 'Opérateur' },
+                { k: 'user',     l: 'Utilisateur' },
               ] as { k: string; l: string }[]).map(f => (
                 <button
                   key={f.k}
@@ -434,6 +437,7 @@ export default function GestionUtilisateursPage() {
             <i className="fas fa-user-tag" />
             <select id="uRole" value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value as Role }))}>
               <option value="user">Utilisateur</option>
+              <option value="operator">Opérateur</option>
               <option value="admin">Administrateur</option>
             </select>
           </div>

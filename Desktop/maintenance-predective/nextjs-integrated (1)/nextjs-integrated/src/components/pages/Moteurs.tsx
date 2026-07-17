@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import AppShell from '@/components/layout/AppShell';
 import { useAuth } from '@/frontend/hooks/useAuth';
 
@@ -16,40 +17,6 @@ interface Moteur {
   date_installation: string | null;
   emplacement: string;
 }
-
-type SensorStatut = 'actif' | 'inactif' | 'attention' | 'alarme';
-
-interface Sensor {
-  id: number;
-  motor_id: number;
-  nom: string;
-  type: string;
-  unite: string;
-  valeur_actuelle: number | null;
-  seuil_min: number | null;
-  seuil_max: number | null;
-  statut: SensorStatut;
-  emplacement: string | null;
-  description: string | null;
-  derniere_lecture_at: string | null;
-}
-
-const STATUT_COLOR: Record<SensorStatut, string> = {
-  actif:     '#22c55e',
-  inactif:   '#94a3b8',
-  attention: '#f59e0b',
-  alarme:    '#ef4444',
-};
-const STATUT_LABEL: Record<SensorStatut, string> = {
-  actif: 'Actif', inactif: 'Inactif', attention: 'Attention', alarme: 'Alarme',
-};
-const TYPE_ICON: Record<string, string> = {
-  vibration:   'fas fa-wave-square',
-  courant:     'fas fa-bolt',
-  temperature: 'fas fa-thermometer-half',
-  vitesse:     'fas fa-tachometer-alt',
-  pression:    'fas fa-compress-alt',
-};
 
 interface MoteurForm {
   nom: string;
@@ -83,6 +50,7 @@ export default function MoteursPage() {
 function MoteursContent() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const router = useRouter();
 
   const [moteurs, setMoteurs]     = useState<Moteur[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,22 +62,6 @@ function MoteursContent() {
   const [delTarget, setDelTarget] = useState<Moteur | null>(null);
   const [form, setForm]           = useState<MoteurForm>({ ...EMPTY_FORM });
   const [saving, setSaving]       = useState(false);
-
-  // ── Motor detail modal ─────────────────────────────────────────────
-  const [detailMot, setDetailMot]         = useState<Moteur | null>(null);
-  const [detailSensors, setDetailSensors] = useState<Sensor[]>([]);
-  const [detailLoading, setDetailLoading] = useState(false);
-
-  const openDetail = useCallback(async (m: Moteur) => {
-    setDetailMot(m);
-    setDetailSensors([]);
-    setDetailLoading(true);
-    try {
-      const res = await fetch(`/api/motors/${m.id}/sensors`);
-      if (res.ok) setDetailSensors(await res.json());
-    } catch { /* show empty sensors list */ }
-    finally { setDetailLoading(false); }
-  }, []);
 
   const loadMoteurs = useCallback(async () => {
     setIsLoading(true);
@@ -263,7 +215,7 @@ function MoteursContent() {
                   className="moteur-title"
                   style={{ cursor: 'pointer', color: 'var(--primary)' }}
                   title="Voir les détails"
-                  onClick={() => openDetail(m)}
+                  onClick={() => router.push(`/moteurs/${m.id}`)}
                 >{m.nom}</div>
                 <div className="moteur-meta">
                   <div className="moteur-meta-item"><i className="fas fa-code"/>{m.modele}</div>
@@ -283,7 +235,7 @@ function MoteursContent() {
                   className="btn-action"
                   title="Voir les détails"
                   style={{ background: 'rgba(53,130,141,0.10)', color: 'var(--primary)', border: '1px solid rgba(53,130,141,0.25)' }}
-                  onClick={() => openDetail(m)}
+                  onClick={() => router.push(`/moteurs/${m.id}`)}
                 >
                   <i className="fas fa-eye"/>
                 </button>
@@ -381,124 +333,6 @@ function MoteursContent() {
               <button className="btn-modal btn-save"   onClick={save}                      disabled={saving}>
                 {saving ? <><i className="fas fa-spinner fa-spin"/> Enregistrement…</> : <><i className="fas fa-save"/> Enregistrer</>}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Motor detail modal */}
-      {detailMot && (
-        <div className="moteur-modal-bg" onClick={e => { if (e.target === e.currentTarget) setDetailMot(null); }}>
-          <div className="moteur-modal-content" style={{ maxWidth: '720px' }}>
-            <div className="moteur-modal-header">
-              <span className="moteur-modal-title">
-                <i className="fas fa-cog" style={{ marginRight: '8px' }}/>
-                {detailMot.nom}
-              </span>
-              <button className="moteur-modal-close" onClick={() => setDetailMot(null)}>&times;</button>
-            </div>
-            <div className="moteur-modal-body">
-
-              {/* Motor specs */}
-              <div className="form-section">
-                <div className="form-section-title"><i className="fas fa-info-circle"/>Informations du moteur</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: '10px' }}>
-                  {[
-                    { l: 'Modèle',       v: detailMot.modele },
-                    { l: 'Fabricant',    v: detailMot.fabricant },
-                    { l: 'Emplacement',  v: detailMot.emplacement },
-                    { l: 'Installation', v: detailMot.date_installation ?? '—' },
-                    { l: 'Puissance',    v: detailMot.puissance !== null ? `${detailMot.puissance} kW` : '—' },
-                    { l: 'Tension',      v: detailMot.tension   !== null ? `${detailMot.tension} V`   : '—' },
-                    { l: 'Courant',      v: detailMot.courant   !== null ? `${detailMot.courant} A`   : '—' },
-                    { l: 'Vitesse',      v: detailMot.vitesse   !== null ? `${detailMot.vitesse} RPM` : '—' },
-                    { l: 'Cos φ',        v: detailMot.cos_phi   !== null ? String(detailMot.cos_phi)  : '—' },
-                  ].map(({ l, v }) => (
-                    <div key={l} style={{ padding: '10px 12px', background: 'rgba(53,130,141,0.04)', borderRadius: '9px', border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '11px', color: 'var(--text-body)', marginBottom: '3px' }}>{l}</div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-heading)', fontFamily: 'var(--mono)' }}>{v}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sensors */}
-              <div className="form-section">
-                <div className="form-section-title">
-                  <i className="fas fa-microchip"/>
-                  Capteurs associés
-                  {!detailLoading && (
-                    <span style={{ marginLeft: '8px', fontSize: '12px', fontWeight: 400, color: 'var(--text-body)' }}>
-                      ({detailSensors.length} capteur{detailSensors.length !== 1 ? 's' : ''})
-                    </span>
-                  )}
-                </div>
-                {detailLoading ? (
-                  <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-body)' }}>
-                    <i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}/>Chargement des capteurs…
-                  </div>
-                ) : detailSensors.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '24px', color: 'var(--text-body)' }}>
-                    <i className="fas fa-microchip" style={{ fontSize: '32px', display: 'block', marginBottom: '10px', color: '#d1d5db' }}/>
-                    Aucun capteur configuré pour ce moteur.
-                    {isAdmin && (
-                      <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--primary)' }}>
-                        Accédez à <strong>Configurer Capteurs</strong> pour en ajouter.
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {detailSensors.map(s => {
-                      const col = STATUT_COLOR[s.statut];
-                      return (
-                        <div key={s.id} style={{
-                          display: 'grid', gridTemplateColumns: '36px 1fr auto', gap: '12px', alignItems: 'center',
-                          padding: '12px 14px', borderRadius: '10px', border: `1px solid ${col}33`,
-                          background: `${col}08`,
-                        }}>
-                          <div style={{
-                            width: '36px', height: '36px', borderRadius: '8px', flexShrink: 0,
-                            background: 'linear-gradient(135deg,var(--primary),var(--primary-dark))',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '14px',
-                          }}>
-                            <i className={TYPE_ICON[s.type] ?? 'fas fa-microchip'} />
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 600, color: 'var(--text-heading)', fontSize: '14px' }}>{s.nom}</div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-body)', marginTop: '2px', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-                              {s.emplacement && <span><i className="fas fa-map-marker-alt" style={{ marginRight: '4px' }}/>{s.emplacement}</span>}
-                              {s.valeur_actuelle !== null && (
-                                <span style={{ fontFamily: 'var(--mono)', fontWeight: 600, color: 'var(--text-heading)' }}>
-                                  {s.valeur_actuelle} {s.unite}
-                                </span>
-                              )}
-                              {(s.seuil_min !== null || s.seuil_max !== null) && (
-                                <span>
-                                  Seuils: <span style={{ color: '#22c55e' }}>{s.seuil_min ?? '—'}</span>
-                                  {' / '}
-                                  <span style={{ color: '#ef4444' }}>{s.seuil_max ?? '—'} {s.unite}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '5px',
-                            padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700,
-                            background: `${col}18`, color: col, border: `1px solid ${col}33`, whiteSpace: 'nowrap',
-                          }}>
-                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: col, display: 'inline-block' }}/>
-                            {STATUT_LABEL[s.statut]}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="moteur-modal-footer">
-              <button className="btn-modal btn-cancel" onClick={() => setDetailMot(null)}>Fermer</button>
             </div>
           </div>
         </div>

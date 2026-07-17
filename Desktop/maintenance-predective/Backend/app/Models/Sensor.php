@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'motor_id',
@@ -34,5 +35,10 @@ class Sensor extends Model
     public function motor(): BelongsTo
     {
         return $this->belongsTo(Motor::class);
+    }
+
+    public function sensorHistories(): HasMany
+    {
+        return $this->hasMany(SensorHistory::class);
     }
 }

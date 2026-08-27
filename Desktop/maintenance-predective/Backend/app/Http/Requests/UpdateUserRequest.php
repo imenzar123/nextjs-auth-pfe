@@ -17,9 +17,10 @@ class UpdateUserRequest extends FormRequest
         $userId = $this->route('user')?->id;
 
         return [
-            'name'  => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'string', 'email', 'max:255', "unique:users,email,{$userId}"],
-            'role'  => ['sometimes', 'string', 'in:admin,user,operator'],
+            'name'   => ['sometimes', 'string', 'max:255'],
+            'email'  => ['sometimes', 'string', 'email', 'max:255', "unique:users,email,{$userId}"],
+            'role'   => ['sometimes', 'string', 'in:admin,user,operator'],
+            'statut' => ['sometimes', 'string', 'in:actif,inactif'],
         ];
     }
 
@@ -29,6 +30,7 @@ class UpdateUserRequest extends FormRequest
             'email.email'   => 'Email must be a valid email address.',
             'email.unique'  => 'An account with this email already exists.',
             'role.in'       => 'Role must be admin, user, or operator.',
+            'statut.in'     => 'Statut must be actif or inactif.',
         ];
     }
 }

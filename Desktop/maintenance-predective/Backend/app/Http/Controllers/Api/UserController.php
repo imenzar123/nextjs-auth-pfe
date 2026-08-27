@@ -17,10 +17,11 @@ class UserController extends Controller
     private function format(User $user): array
     {
         return [
-            'id'    => $user->id,
-            'name'  => $user->name,
-            'email' => $user->email,
-            'role'  => $user->role,
+            'id'     => $user->id,
+            'name'   => $user->name,
+            'email'  => $user->email,
+            'role'   => $user->role,
+            'statut' => $user->statut,
         ];
     }
 
@@ -29,6 +30,20 @@ class UserController extends Controller
         $users = User::orderBy('name')->get()->map(fn(User $u) => $this->format($u));
 
         return response()->json($users);
+    }
+
+    /** GET /users/techniciens — utilisateurs role 'user', pour le formulaire d'assignation d'alerte, réservé au rôle operator */
+    public function techniciens(Request $request): JsonResponse
+    {
+        if (!in_array($request->user()?->role, ['operator', 'admin'])) {
+            return response()->json(['message' => 'Forbidden. Operator access required.'], 403);
+        }
+
+        $techniciens = User::where('role', 'user')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json($techniciens);
     }
 
     public function store(StoreUserRequest $request): JsonResponse
@@ -41,6 +56,7 @@ class UserController extends Controller
             'email'    => $request->email,
             'password' => $plainPassword, // hashed automatically by the model cast
             'role'     => $request->role,
+            'statut'   => $request->statut ?? 'actif',
         ]);
 
         // Send credentials email (best-effort — user is created regardless).
@@ -55,7 +71,7 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
-        $user->update($request->only('name', 'email', 'role'));
+        $user->update($request->only('name', 'email', 'role', 'statut'));
 
         return response()->json($this->format($user));
     }

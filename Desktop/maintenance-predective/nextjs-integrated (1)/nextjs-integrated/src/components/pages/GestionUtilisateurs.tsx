@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import AppShell from '@/components/layout/AppShell';
 import Pagination from '@/components/ui/Pagination';
 import Modal from '@/components/ui/Modal';
+import { useAuth } from '@/frontend/hooks/useAuth';
 
 // ── Types ──────────────────────────────────────────────────────
 type Role = 'admin' | 'user' | 'operator';
@@ -12,7 +13,7 @@ interface User {
   name: string;
   email: string;
   role: Role;
-  statut: 'actif' | 'inactif'; // UI-only — never sent to the API
+  statut: 'actif' | 'inactif';
 }
 
 interface FormState {
@@ -38,7 +39,11 @@ const ROLE_BADGE: Record<Role, string> = {
 const BLANK_FORM: FormState = { name: '', email: '', role: 'user', statut: 'actif' };
 
 // ── Component ──────────────────────────────────────────────────
-export default function GestionUtilisateursPage() {
+// Rendered as a child of AppShell so it sits inside AuthProvider (see useAuth() below).
+function GestionUtilisateursContent() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
+
   const [users, setUsers]               = useState<User[]>([]);
   const [isLoading, setIsLoading]       = useState(true);
   const [fetchError, setFetchError]     = useState('');
@@ -66,9 +71,8 @@ export default function GestionUtilisateursPage() {
     try {
       const res = await fetch('/api/users');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: Omit<User, 'statut'>[] = await res.json();
-      // Attach default UI statut — not stored in the backend
-      setUsers(data.map(u => ({ ...u, statut: 'actif' })));
+      const data: User[] = await res.json();
+      setUsers(data);
     } catch {
       setFetchError('Impossible de charger les utilisateurs. Vérifiez votre connexion.');
     } finally {
@@ -133,7 +137,14 @@ export default function GestionUtilisateursPage() {
     setModalError('');
 
     try {
-      const payload = { name: form.name.trim(), email: form.email.trim(), role: form.role };
+      // Le statut n'est modifiable que par un admin (champ masqué sinon, cf. JSX) — on ne
+      // l'envoie donc que dans ce cas pour ne jamais écraser la valeur en base autrement.
+      const payload = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        role: form.role,
+        ...(isAdmin ? { statut: form.statut } : {}),
+      };
 
       if (editUser) {
         // ── Update ──
@@ -145,10 +156,7 @@ export default function GestionUtilisateursPage() {
         const data = await res.json();
         if (!res.ok) { setModalError(data.message ?? 'Erreur lors de la mise à jour.'); return; }
 
-        // Preserve local statut after update
-        setUsers(us => us.map(u =>
-          u.id === editUser.id ? { ...data, statut: form.statut } : u,
-        ));
+        setUsers(us => us.map(u => (u.id === editUser.id ? data : u)));
       } else {
         // ── Create ──
         const res = await fetch('/api/users', {
@@ -159,7 +167,7 @@ export default function GestionUtilisateursPage() {
         const data = await res.json();
         if (!res.ok) { setModalError(data.message ?? 'Erreur lors de la création.'); return; }
 
-        setUsers(us => [...us, { ...data, statut: 'actif' }]);
+        setUsers(us => [...us, data]);
       }
 
       setShowModal(false);
@@ -200,7 +208,7 @@ export default function GestionUtilisateursPage() {
 
   // ── Render ────────────────────────────────────────────────────
   return (
-    <AppShell>
+    <>
       <div className="page-container">
 
         {/* Header */}
@@ -443,16 +451,18 @@ export default function GestionUtilisateursPage() {
           </div>
         </div>
 
-        <div className="form-group">
-          <label htmlFor="uStatut">Statut</label>
-          <div className="input-wrapper">
-            <i className="fas fa-toggle-on" />
-            <select id="uStatut" value={form.statut} onChange={e => setForm(f => ({ ...f, statut: e.target.value as 'actif' | 'inactif' }))}>
-              <option value="actif">Actif</option>
-              <option value="inactif">Inactif</option>
-            </select>
+        {isAdmin && (
+          <div className="form-group">
+            <label htmlFor="uStatut">Statut</label>
+            <div className="input-wrapper">
+              <i className="fas fa-toggle-on" />
+              <select id="uStatut" value={form.statut} onChange={e => setForm(f => ({ ...f, statut: e.target.value as 'actif' | 'inactif' }))}>
+                <option value="actif">Actif</option>
+                <option value="inactif">Inactif</option>
+              </select>
+            </div>
           </div>
-        </div>
+        )}
 
         {!editUser && (
           <div style={{ marginTop: '0.5rem', padding: '12px 14px', borderRadius: '8px', background: 'rgba(53,130,141,0.07)', border: '1px solid rgba(53,130,141,0.2)', fontSize: '0.83rem', color: '#35828d' }}>
@@ -485,7 +495,14 @@ export default function GestionUtilisateursPage() {
           <p className="delete-item-name">{deleteTarget?.name}</p>
         </div>
       </Modal>
+    </>
+  );
+}
 
+export default function GestionUtilisateursPage() {
+  return (
+    <AppShell>
+      <GestionUtilisateursContent />
     </AppShell>
   );
 }

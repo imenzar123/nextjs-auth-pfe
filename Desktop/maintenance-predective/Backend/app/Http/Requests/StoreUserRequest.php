@@ -14,9 +14,10 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'  => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'role'  => ['required', 'string', 'in:admin,user,operator'],
+            'name'   => ['required', 'string', 'max:255'],
+            'email'  => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'role'   => ['required', 'string', 'in:admin,user,operator'],
+            'statut' => ['sometimes', 'string', 'in:actif,inactif'],
         ];
     }
 
@@ -29,6 +30,7 @@ class StoreUserRequest extends FormRequest
             'email.unique'   => 'An account with this email already exists.',
             'role.required'  => 'Role is required.',
             'role.in'        => 'Role must be admin, user, or operator.',
+            'statut.in'      => 'Statut must be actif or inactif.',
         ];
     }
 }

@@ -35,9 +35,14 @@ export async function POST(request: NextRequest) {
     );
 
     if (!laravelRes.ok) {
+      // Relaie le message et le code réels de Laravel (ex: 401 identifiants invalides,
+      // 403 compte désactivé) au lieu d'un message générique unique — Laravel gère déjà
+      // l'anti-énumération (même message pour email inconnu / mot de passe incorrect),
+      // donc ce relais n'introduit aucune fuite d'information supplémentaire.
+      const errorData = await laravelRes.json().catch(() => ({}));
       return NextResponse.json(
-        { message: 'Identifiants incorrects.' },
-        { status: 401 },
+        { message: errorData.message ?? 'Identifiants incorrects.' },
+        { status: laravelRes.status },
       );
     }
 

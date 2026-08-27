@@ -17,10 +17,17 @@ class UpdateUserRequest extends FormRequest
         $userId = $this->route('user')?->id;
 
         return [
-            'name'   => ['sometimes', 'string', 'max:255'],
-            'email'  => ['sometimes', 'string', 'email', 'max:255', "unique:users,email,{$userId}"],
-            'role'   => ['sometimes', 'string', 'in:admin,user,operator'],
-            'statut' => ['sometimes', 'string', 'in:actif,inactif'],
+            'name'           => ['sometimes', 'string', 'max:255'],
+            'email'          => ['sometimes', 'string', 'email', 'max:255', "unique:users,email,{$userId}"],
+            'role'           => ['sometimes', 'string', 'in:admin,user,operator'],
+            'statut'         => ['sometimes', 'string', 'in:actif,inactif'],
+            'telephone'      => ['sometimes', 'nullable', 'string', 'max:20'],
+            'date_naissance' => ['sometimes', 'nullable', 'date'],
+            'genre'          => ['sometimes', 'nullable', 'in:homme,femme'],
+            'poste'          => ['sometimes', 'nullable', 'string', 'max:100'],
+            'departement'    => ['sometimes', 'nullable', 'string', 'max:100'],
+            'adresse'        => ['sometimes', 'nullable', 'string'],
+            'date_embauche'  => ['sometimes', 'nullable', 'date'],
         ];
     }
 

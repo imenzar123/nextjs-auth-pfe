@@ -14,6 +14,13 @@ interface User {
   email: string;
   role: Role;
   statut: 'actif' | 'inactif';
+  telephone: string | null;
+  date_naissance: string | null;
+  genre: 'homme' | 'femme' | null;
+  poste: string | null;
+  departement: string | null;
+  adresse: string | null;
+  date_embauche: string | null;
 }
 
 interface FormState {
@@ -21,6 +28,13 @@ interface FormState {
   email: string;
   role: Role;
   statut: 'actif' | 'inactif';
+  telephone: string;
+  date_naissance: string;
+  genre: '' | 'homme' | 'femme';
+  poste: string;
+  departement: string;
+  adresse: string;
+  date_embauche: string;
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -36,7 +50,10 @@ const ROLE_BADGE: Record<Role, string> = {
   operator: 'badge-operator',
 };
 
-const BLANK_FORM: FormState = { name: '', email: '', role: 'user', statut: 'actif' };
+const BLANK_FORM: FormState = {
+  name: '', email: '', role: 'user', statut: 'actif',
+  telephone: '', date_naissance: '', genre: '', poste: '', departement: '', adresse: '', date_embauche: '',
+};
 
 // ── Component ──────────────────────────────────────────────────
 // Rendered as a child of AppShell so it sits inside AuthProvider (see useAuth() below).
@@ -121,7 +138,16 @@ function GestionUtilisateursContent() {
 
   const openEdit = (u: User) => {
     setEditUser(u);
-    setForm({ name: u.name, email: u.email, role: u.role, statut: u.statut });
+    setForm({
+      name: u.name, email: u.email, role: u.role, statut: u.statut,
+      telephone: u.telephone ?? '',
+      date_naissance: u.date_naissance ?? '',
+      genre: u.genre ?? '',
+      poste: u.poste ?? '',
+      departement: u.departement ?? '',
+      adresse: u.adresse ?? '',
+      date_embauche: u.date_embauche ?? '',
+    });
     setModalError('');
     setShowModal(true);
   };
@@ -139,11 +165,22 @@ function GestionUtilisateursContent() {
     try {
       // Le statut n'est modifiable que par un admin (champ masqué sinon, cf. JSX) — on ne
       // l'envoie donc que dans ce cas pour ne jamais écraser la valeur en base autrement.
+      // Les champs profil (téléphone...adresse) ne sont affichés/envoyés qu'en modification —
+      // le formulaire d'ajout reste à 4 champs.
       const payload = {
         name: form.name.trim(),
         email: form.email.trim(),
         role: form.role,
         ...(isAdmin ? { statut: form.statut } : {}),
+        ...(editUser ? {
+          telephone: form.telephone.trim() || null,
+          date_naissance: form.date_naissance || null,
+          genre: form.genre || null,
+          poste: form.poste.trim() || null,
+          departement: form.departement.trim() || null,
+          adresse: form.adresse.trim() || null,
+          date_embauche: form.date_embauche || null,
+        } : {}),
       };
 
       if (editUser) {
@@ -435,7 +472,9 @@ function GestionUtilisateursContent() {
           <div className="input-wrapper">
             <i className="fas fa-envelope" />
             <input id="uEmail" type="email" placeholder="exemple@domaine.com"
-              value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+              value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              readOnly={!!editUser} disabled={!!editUser}
+              style={editUser ? { opacity: 0.7, cursor: 'not-allowed' } : undefined} />
           </div>
         </div>
 
@@ -462,6 +501,79 @@ function GestionUtilisateursContent() {
               </select>
             </div>
           </div>
+        )}
+
+        {editUser && (
+          <>
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: '1 1 220px' }}>
+                <label htmlFor="uTelephone">Téléphone</label>
+                <div className="input-wrapper">
+                  <i className="fas fa-phone" />
+                  <input id="uTelephone" type="tel" placeholder="+216 ..."
+                    value={form.telephone} onChange={e => setForm(f => ({ ...f, telephone: e.target.value }))} />
+                </div>
+              </div>
+              <div className="form-group" style={{ flex: '1 1 220px' }}>
+                <label htmlFor="uDateNaissance">Date de naissance</label>
+                <div className="input-wrapper">
+                  <i className="fas fa-birthday-cake" />
+                  <input id="uDateNaissance" type="date"
+                    value={form.date_naissance} onChange={e => setForm(f => ({ ...f, date_naissance: e.target.value }))} />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: '1 1 220px' }}>
+                <label htmlFor="uGenre">Genre</label>
+                <div className="input-wrapper">
+                  <i className="fas fa-venus-mars" />
+                  <select id="uGenre" value={form.genre} onChange={e => setForm(f => ({ ...f, genre: e.target.value as FormState['genre'] }))}>
+                    <option value="">Non précisé</option>
+                    <option value="homme">Homme</option>
+                    <option value="femme">Femme</option>
+                  </select>
+                </div>
+              </div>
+              <div className="form-group" style={{ flex: '1 1 220px' }}>
+                <label htmlFor="uPoste">Poste</label>
+                <div className="input-wrapper">
+                  <i className="fas fa-briefcase" />
+                  <input id="uPoste" type="text" placeholder="Ex. Technicien de maintenance"
+                    value={form.poste} onChange={e => setForm(f => ({ ...f, poste: e.target.value }))} />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: '1 1 220px' }}>
+                <label htmlFor="uDepartement">Département</label>
+                <div className="input-wrapper">
+                  <i className="fas fa-building" />
+                  <input id="uDepartement" type="text" placeholder="Ex. Maintenance"
+                    value={form.departement} onChange={e => setForm(f => ({ ...f, departement: e.target.value }))} />
+                </div>
+              </div>
+              <div className="form-group" style={{ flex: '1 1 220px' }}>
+                <label htmlFor="uDateEmbauche">Date d&apos;embauche</label>
+                <div className="input-wrapper">
+                  <i className="fas fa-calendar-check" />
+                  <input id="uDateEmbauche" type="date"
+                    value={form.date_embauche} onChange={e => setForm(f => ({ ...f, date_embauche: e.target.value }))} />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="uAdresse">Adresse</label>
+              <div className="input-wrapper">
+                <i className="fas fa-map-marker-alt" style={{ top: '22px' }} />
+                <textarea id="uAdresse" rows={3} placeholder="Adresse complète"
+                  value={form.adresse} onChange={e => setForm(f => ({ ...f, adresse: e.target.value }))} />
+              </div>
+            </div>
+          </>
         )}
 
         {!editUser && (

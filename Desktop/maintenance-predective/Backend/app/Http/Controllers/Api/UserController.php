@@ -17,11 +17,18 @@ class UserController extends Controller
     private function format(User $user): array
     {
         return [
-            'id'     => $user->id,
-            'name'   => $user->name,
-            'email'  => $user->email,
-            'role'   => $user->role,
-            'statut' => $user->statut,
+            'id'             => $user->id,
+            'name'           => $user->name,
+            'email'          => $user->email,
+            'role'           => $user->role,
+            'statut'         => $user->statut,
+            'telephone'      => $user->telephone,
+            'date_naissance' => $user->date_naissance,
+            'genre'          => $user->genre,
+            'poste'          => $user->poste,
+            'departement'    => $user->departement,
+            'adresse'        => $user->adresse,
+            'date_embauche'  => $user->date_embauche,
         ];
     }
 
@@ -71,7 +78,11 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
-        $user->update($request->only('name', 'email', 'role', 'statut'));
+        $user->update($request->only(
+            'name', 'email', 'role', 'statut',
+            'telephone', 'date_naissance', 'genre', 'poste',
+            'departement', 'adresse', 'date_embauche',
+        ));
 
         return response()->json($this->format($user));
     }

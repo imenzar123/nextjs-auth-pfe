@@ -154,7 +154,16 @@ function GestionUtilisateursContent() {
 
   // ── Save (create or update) ───────────────────────────────────
   const saveUser = async () => {
-    if (!form.name.trim() || !form.email.trim() || !form.role) {
+    // À la création, tous les champs (y compris les 7 champs profil) sont obligatoires
+    // (StoreUserRequest les valide en required) ; en modification ils restent optionnels
+    // (UpdateUserRequest — sometimes|nullable), donc non re-vérifiés ici.
+    const missingCore = !form.name.trim() || !form.email.trim() || !form.role;
+    const missingProfile = !editUser && (
+      !form.telephone.trim() || !form.date_naissance || !form.genre ||
+      !form.poste.trim() || !form.departement.trim() || !form.adresse.trim() || !form.date_embauche
+    );
+
+    if (missingCore || missingProfile) {
       setModalError('Veuillez remplir tous les champs obligatoires.');
       return;
     }
@@ -165,22 +174,18 @@ function GestionUtilisateursContent() {
     try {
       // Le statut n'est modifiable que par un admin (champ masqué sinon, cf. JSX) — on ne
       // l'envoie donc que dans ce cas pour ne jamais écraser la valeur en base autrement.
-      // Les champs profil (téléphone...adresse) ne sont affichés/envoyés qu'en modification —
-      // le formulaire d'ajout reste à 4 champs.
       const payload = {
         name: form.name.trim(),
         email: form.email.trim(),
         role: form.role,
         ...(isAdmin ? { statut: form.statut } : {}),
-        ...(editUser ? {
-          telephone: form.telephone.trim() || null,
-          date_naissance: form.date_naissance || null,
-          genre: form.genre || null,
-          poste: form.poste.trim() || null,
-          departement: form.departement.trim() || null,
-          adresse: form.adresse.trim() || null,
-          date_embauche: form.date_embauche || null,
-        } : {}),
+        telephone: form.telephone.trim() || null,
+        date_naissance: form.date_naissance || null,
+        genre: form.genre || null,
+        poste: form.poste.trim() || null,
+        departement: form.departement.trim() || null,
+        adresse: form.adresse.trim() || null,
+        date_embauche: form.date_embauche || null,
       };
 
       if (editUser) {
@@ -503,8 +508,7 @@ function GestionUtilisateursContent() {
           </div>
         )}
 
-        {editUser && (
-          <>
+        <>
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               <div className="form-group" style={{ flex: '1 1 220px' }}>
                 <label htmlFor="uTelephone">Téléphone</label>
@@ -573,8 +577,7 @@ function GestionUtilisateursContent() {
                   value={form.adresse} onChange={e => setForm(f => ({ ...f, adresse: e.target.value }))} />
               </div>
             </div>
-          </>
-        )}
+        </>
 
         {!editUser && (
           <div style={{ marginTop: '0.5rem', padding: '12px 14px', borderRadius: '8px', background: 'rgba(53,130,141,0.07)', border: '1px solid rgba(53,130,141,0.2)', fontSize: '0.83rem', color: '#35828d' }}>

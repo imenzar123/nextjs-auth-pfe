@@ -59,11 +59,18 @@ class UserController extends Controller
         $plainPassword = Str::password(length: 10, symbols: false);
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => $plainPassword, // hashed automatically by the model cast
-            'role'     => $request->role,
-            'statut'   => $request->statut ?? 'actif',
+            'name'           => $request->name,
+            'email'          => $request->email,
+            'password'       => $plainPassword, // hashed automatically by the model cast
+            'role'           => $request->role,
+            'statut'         => $request->statut ?? 'actif',
+            'telephone'      => $request->telephone,
+            'date_naissance' => $request->date_naissance,
+            'genre'          => $request->genre,
+            'poste'          => $request->poste,
+            'departement'    => $request->departement,
+            'adresse'        => $request->adresse,
+            'date_embauche'  => $request->date_embauche,
         ]);
 
         // Send credentials email (best-effort — user is created regardless).

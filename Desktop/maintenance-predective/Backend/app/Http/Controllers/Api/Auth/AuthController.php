@@ -114,12 +114,12 @@ class AuthController extends Controller
             'role'           => $user->role,
             'avatar'         => $avatarUrl,
             'telephone'      => $user->telephone,
-            'date_naissance' => $user->date_naissance,
+            'date_naissance' => $user->date_naissance?->format('Y-m-d'),
             'genre'          => $user->genre,
             'poste'          => $user->poste,
             'departement'    => $user->departement,
             'adresse'        => $user->adresse,
-            'date_embauche'  => $user->date_embauche,
+            'date_embauche'  => $user->date_embauche?->format('Y-m-d'),
         ]);
     }
 
